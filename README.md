@@ -4,25 +4,41 @@ Este é um projeto de um **Gerenciador de Tarefas** desenvolvido em **Python**, 
 
 ## Índice
 
-*   [Descrição do Projeto](#descri%C3%A7%C3%A3o-do-projeto)
+1.  [Descrição do Projeto](#descri%C3%A7%C3%A3o-do-projeto)
 
-*   [Requisitos Funcionais e Regras de Negócio](#requisitos-funcionais-e-regras-de-neg%C3%B3cio)
+2.  [Requisitos Funcionais e Regras de Negócio](#requisitos-funcionais-e-regras-de-neg%C3%B3cio)
 
-*   [Funcionalidades](#funcionalidades)
+3.  [Funcionalidades](#funcionalidades)
 
-*   [Tecnologias Utilizadas](#tecnologias-utilizadas)
+4.  [Tecnologias Utilizadas](#tecnologias-utilizadas)
 
-*   [Estrutura do Projeto](#estrutura-do-projeto)
+5.  [Estrutura do Projeto](#estrutura-do-projeto)
 
-*   [Instalação e Execução](#instala%C3%A7%C3%A3o-e-execu%C3%A7%C3%A3o)
+6.  [Instalação e Execução](#instala%C3%A7%C3%A3o-e-execu%C3%A7%C3%A3o)
 
     *   [Gerenciando o Python e Pacotes com uv](#gerenciando-o-python-e-pacotes-com-uv)
 
     *   [Instalando Dependências](#instalando-depend%C3%AAncias)
 
-*   [Testes](#testes)
+    *   [Comandos Utilitários](#comandos-utilit%C3%A1rios)
 
-*   [Autores](#autores)
+7.  [Testes](#testes)
+
+    *   [Executando os Testes com pytest](#executando-os-testes-com-pytest)
+
+        *   [Testes de Unidade](#testes-de-unidade)
+
+        *   [Testes de Integração](#testes-de-integra%C3%A7%C3%A3o)
+
+    *   [Cobertura de Testes](#cobertura-de-testes)
+
+        *   [Mapeamento dos Testes para RFs e RNs](#mapeamento-dos-testes-para-rfs-e-rns)
+
+            *   [Felipe](#felipe)
+
+            *   [Douglas](#douglas)
+
+8.  [Autores](#autores)
 
 ## Descrição do Projeto
 
@@ -123,19 +139,19 @@ O Gerenciador de Tarefas é uma aplicação web que permite aos usuários admini
 - tests/
   - felipe/
     - unit_tests/
-      - test_auth.py       # 10 Testes Unitários de Felipe
-      - test_tasks.py
+      - test_felipe_auth.py       # 10 Testes Unitários de Felipe
+      - test_felipe_tasks.py
+      - conftest.py               # Configurações do pytest para Felipe
     - integration_tests/
-      - test_integration.py  # 4 Testes de Integração de Felipe
-    - conftest.py          # Configurações do pytest para Felipe
+      - test_felipe_integration.py  # 4 Testes de Integração de Felipe
   - douglas/
     - unit_tests/
-      - test_tasks.py      # 10 Testes Unitários de Douglas
+      - test_douglas_tasks.py      # 10 Testes Unitários de Douglas
+      - conftest.py                # Configurações do pytest para Douglas
     - integration_tests/
-      - test_integration.py  # 4 Testes de Integração de Douglas
-    - conftest.py          # Configurações do pytest para Douglas
+      - test_douglas_integration.py  # 4 Testes de Integração de Douglas
+- Makefile                 # Comandos úteis do Makefile
 - requirements.txt         # Dependências do projeto
-- requirements-dev.txt     # Dependências de desenvolvimento (opcional)
 - uv.lock                  # Arquivo de lock do uv
 - .python-version          # Arquivo de versão do Python
 
@@ -214,10 +230,10 @@ Isso criará um ambiente virtual utilizando a versão do Python especificada.
 
 #### Instalando as Dependências do Projeto
 
-Utilize o `uv` para instalar as dependências listadas no `requirements.txt`:
+Utilize o `Makefile` para instalar as dependências listadas no `requirements.txt`:
 
 ```
-uv pip install -r requirements.txt
+make install
 
 ```
 
@@ -226,31 +242,68 @@ uv pip install -r requirements.txt
 1.  Inicie o servidor FastAPI com o Uvicorn:
 
     ```
-    uv run uvicorn main:app --app-dir src --reload 
+    make run
 
     ```
 
     O backend estará rodando em `http://localhost:8000`.
 
+### 📂 Comandos Utilitários
+
+Além dos comandos principais, você pode utilizar comandos utilitários para manter o projeto limpo e organizado.
+
+#### Limpar Cache de Testes
+
+Remova todos os diretórios `__pycache__` e arquivos `.pyc` para evitar conflitos de importação e garantir que os testes sejam executados com os arquivos mais recentes.
+
+```
+make clean-cache
+
+```
+
+***
+
 ## Testes
 
 ### Executando os Testes com pytest
 
-#### Testes de Felipe
+#### Testes de Unidade
 
-*   **Executar todos os testes de Felipe:**
+*   **Felipe:**
 
-    ```
-    pytest tests/felipe/
-
-    ```
-
-#### Testes de Douglas
-
-*   **Executar todos os testes de Douglas:**
+    Execute os testes unitários de Felipe:
 
     ```
-    pytest tests/douglas/
+    pytest tests/felipe/unit_tests/
+
+    ```
+
+*   **Douglas:**
+
+    Execute os testes unitários de Douglas:
+
+    ```
+    pytest tests/douglas/unit_tests/
+
+    ```
+
+#### Testes de Integração
+
+*   **Felipe:**
+
+    Execute os testes de integração de Felipe:
+
+    ```
+    pytest tests/felipe/integration_tests/
+
+    ```
+
+*   **Douglas:**
+
+    Execute os testes de integração de Douglas:
+
+    ```
+    pytest tests/douglas/integration_tests/
 
     ```
 
@@ -264,25 +317,103 @@ Cada membro do grupo desenvolveu:
 
 Os testes cobrem os requisitos funcionais e regras de negócio conforme especificado, garantindo a qualidade e confiabilidade do sistema.
 
+#### Mapeamento dos Testes para RFs e RNs
+
+##### Felipe
+
+**Testes de Unidade:**
+
+1.  `test_felipe_auth.py` - RF1 - RN1
+
+2.  `test_felipe_tasks.py` - RF3 - RN3
+
+3.  `test_create_task` - RF3 - RN3
+
+4.  `test_complete_task` - RF5 - RN5
+
+5.  `test_share_task` - RF5 - RN5
+
+6.  `test_task_due_date` - RF3 - RN3
+
+7.  `test_task_overdue` - RF7 - RN7
+
+8.  `test_duplicate_task_title` - RF3 - RN3
+
+9.  `test_shared_task_visibility` - RF5 - RN5
+
+10. `test_unshare_task` - RF5 - RN5
+
+**Testes de Integração:**
+
+1.  `test_felipe_integration.py` - RF1 - RN1 e RF2 - RN2
+
+2.  `test_create_task` - RF3 - RN3
+
+3.  `test_share_task` - RF5 - RN5
+
+4.  `test_list_tasks_shared` - RF5 - RN5
+
+##### Douglas
+
+**Testes de Unidade:**
+
+1.  `test_douglas_tasks.py` - RF4 - RN4
+
+2.  `test_edit_task` - RF4 - RN4
+
+3.  `test_edit_completed_task` - RF4 - RN4
+
+4.  `test_delete_task` - RF5 - RN5
+
+5.  `test_delete_completed_task` - RF5 - RN5
+
+6.  `test_list_tasks_with_filter` - RF7 - RN7
+
+7.  `test_list_tasks_with_filter_pending` - RF7 - RN7
+
+8.  `test_share_task_douglas` - RF8 - RN8
+
+9.  `test_unshare_task_douglas` - RF8 - RN8
+
+10. `test_delete_shared_task_douglas` - RF5 - RF8
+
+**Testes de Integração:**
+
+1.  `test_douglas_integration.py` - RF1 - RN1 e RF2 - RN2
+
+2.  `test_edit_task` - RF4 - RN4
+
+3.  `test_delete_task` - RF5 - RN5
+
+4.  `test_list_tasks_owner` - RF7 - RN7
+
 ## Autores
 
 *   **Felipe**
 
     *   **Responsabilidades:**
 
-        *   Implementação dos endpoints de registro e autenticação de usuários (`/register`, `/login`).
+        *   **RF1 - RN1:** Implementação dos endpoints de registro de usuários (`/users/`).
 
-        *   Desenvolvimento das funcionalidades de criação e edição de tarefas.
+        *   **RF2 - RN2:** Implementação dos endpoints de login de usuários (`/users/login`).
 
-        *   Desenvolvimento dos testes unitários e de integração correspondentes utilizando **pytest**.
+        *   **RF3 - RN3:** Desenvolvimento das funcionalidades de criação de tarefas.
+
+        *   **RF5 - RN5:** Implementação das funcionalidades de exclusão de tarefas.
+
+        *   **Testes:** Desenvolvimento de 10 testes unitários e 4 testes de integração relacionados aos requisitos acima.
 
 *   **Douglas**
 
     *   **Responsabilidades:**
 
-        *   Implementação dos endpoints de exclusão, conclusão e compartilhamento de tarefas.
+        *   **RF4 - RN4:** Implementação das funcionalidades de edição de tarefas.
 
-        *   Desenvolvimento das funcionalidades de listagem e filtragem de tarefas.
+        *   **RF6 - RN6:** Desenvolvimento das funcionalidades de marcação de tarefas como concluídas.
 
-        *   Desenvolvimento dos testes unitários e de integração correspondentes utilizando **pytest**.
+        *   **RF7 - RN7:** Desenvolvimento das funcionalidades de listagem e filtragem de tarefas.
+
+        *   **RF8 - RN8:** Implementação das funcionalidades de compartilhamento de tarefas.
+
+        *   **Testes:** Desenvolvimento de 10 testes unitários e 4 testes de integração relacionados aos requisitos acima.
 

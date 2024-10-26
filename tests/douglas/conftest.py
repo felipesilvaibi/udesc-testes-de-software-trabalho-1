@@ -1,30 +1,44 @@
-# tests/douglas/conftest.py
+# tests/douglas/unit_tests/conftest.py
 
 import pytest
-from fastapi.testclient import TestClient
-from main import app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database import Base, get_db
+from fastapi.testclient import TestClient
+from main import app
 
-# Configuração do banco de dados para testes de Douglas
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test_douglas.db"
+DATABASE_URL = "sqlite:///:memory:"
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(bind=engine)
-
-# Criação das tabelas no banco de dados de teste
-Base.metadata.create_all(bind=engine)
-
-# Fixture para o cliente de teste
 @pytest.fixture(scope="session")
-def client():
+def engine():
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    Base.metadata.create_all(bind=engine)
+    yield engine
+    Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture(scope="function")
+def db_session(engine):
+    """Cria uma sessão de banco de dados para um teste."""
+    connection = engine.connect()
+    transaction = connection.begin()
+    Session = sessionmaker(bind=connection)
+    session = Session()
+
+    yield session
+
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+@pytest.fixture(scope="module")
+def client(db_session):
     def override_get_db():
         try:
-            db = TestingSessionLocal()
-            yield db
+            yield db_session
         finally:
-            db.close()
+            pass
+
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
         yield c
+    app.dependency_overrides.clear()
