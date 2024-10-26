@@ -44,9 +44,10 @@ class ShareTask(BaseModel):
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 def create_task(task: TaskCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint para criar uma nova tarefa.
+    RF3: O sistema deve permitir que o usuário cadastre novas tarefas
     """
-    # RF3, RN3: Garantir título único para o usuário
+    
+    # RF3-RN1: O mesmo usuário não pode ter mais de uma tarefa com o mesmo nome
     existing_task = db.query(Task).filter(Task.title == task.title, Task.owner_id == current_user.id).first()
     if existing_task:
         raise HTTPException(
@@ -69,22 +70,23 @@ def create_task(task: TaskCreate, current_user: User = Depends(get_current_user)
 @router.put("/{task_id}", response_model=TaskResponse, status_code=status.HTTP_200_OK)
 def update_task(task_id: int, task: TaskUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint para atualizar completamente uma tarefa existente.
+    RF4: O sistema deve permitir a edição de tarefas cadastradas
     """
-    # RF4, RN4: Apenas tarefas não concluídas podem ser editadas
+
     existing_task = db.query(Task).filter(Task.id == task_id, Task.owner_id == current_user.id).first()
     if not existing_task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tarefa não encontrada",
         )
+
+    # RF4-RN1: Tarefas concluídas não podem ser editadas        
     if existing_task.is_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Tarefas concluídas não podem ser editadas",
         )
 
-    # RF3, RN3: Verificar se o novo título já existe para o usuário
     if task.title and task.title != existing_task.title:
         duplicate_task = db.query(Task).filter(Task.title == task.title, Task.owner_id == current_user.id).first()
         if duplicate_task:
@@ -93,7 +95,6 @@ def update_task(task_id: int, task: TaskUpdate, current_user: User = Depends(get
                 detail="Você já possui uma tarefa com este título",
             )
 
-    # Atualizar campos
     for key, value in task.dict(exclude_unset=True).items():
         setattr(existing_task, key, value)
 
@@ -105,15 +106,17 @@ def update_task(task_id: int, task: TaskUpdate, current_user: User = Depends(get
 @router.delete("/{task_id}", response_model=dict, status_code=status.HTTP_200_OK)
 def delete_task(task_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint para excluir uma tarefa.
+    RF5: O sistema deve permitir a exclusão de tarefas
     """
-    # RF5, RN5: Tarefas concluídas não podem ser excluídas
+    
     task = db.query(Task).filter(Task.id == task_id, Task.owner_id == current_user.id).first()
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tarefa não encontrada",
         )
+
+    # RF5-RN1: Tarefas concluídas não podem ser excluídas
     if task.is_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -128,15 +131,17 @@ def delete_task(task_id: int, current_user: User = Depends(get_current_user), db
 @router.patch("/{task_id}/complete", response_model=TaskResponse, status_code=status.HTTP_200_OK)
 def complete_task(task_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint para marcar uma tarefa como concluída.
+    RF6: O sistema deve permitir marcar tarefas como concluídas
     """
-    # RF6, RN6: Registrar data de conclusão
+
     task = db.query(Task).filter(Task.id == task_id, Task.owner_id == current_user.id).first()
     if not task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Tarefa não encontrada",
         )
+
+    # RF6-RN1: Tarefas já concluídas não podem ser concluídas novamente        
     if task.is_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -153,15 +158,15 @@ def complete_task(task_id: int, current_user: User = Depends(get_current_user), 
 @router.get("/", response_model=List[TaskResponse], status_code=status.HTTP_200_OK)
 def list_tasks(status: Optional[str] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint para listar tarefas, incluindo as tarefas do usuário e aquelas compartilhadas com ele.
+    RF7: O sistema deve permitir a listagem de tarefas
     """
-    # Construir a consulta que inclui tarefas do usuário e tarefas compartilhadas com ele
+    
     query = db.query(Task).filter(
         (Task.owner_id == current_user.id) |
         (Task.shared_with_users.any(id=current_user.id))
     )
 
-    # Aplicar o filtro de status, se fornecido
+    # RF7-RN1: O usuário deve poder filtrar tarefas por status (concluídas ou pendentes).
     if status:
         if status.lower() == "concluídas":
             query = query.filter(Task.is_completed == True)
@@ -179,9 +184,10 @@ def list_tasks(status: Optional[str] = None, current_user: User = Depends(get_cu
 @router.post("/{task_id}/share", response_model=dict, status_code=status.HTTP_200_OK)
 def share_task(task_id: int, share: ShareTask, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
-    Endpoint para compartilhar uma tarefa com outro usuário.
+    RF8: O sistema deve permitir que usuários compartilhem suas tarefas com demais usuários
     """
-    # Verificar se a tarefa existe e pertence ao usuário atual
+
+    # RF8-RN1: Somente tarefas criadas pelo usuário logado podem ser compartilhadas pelo mesmo
     task = db.query(Task).filter(Task.id == task_id, Task.owner_id == current_user.id).first()
     if not task:
         raise HTTPException(
@@ -189,7 +195,6 @@ def share_task(task_id: int, share: ShareTask, current_user: User = Depends(get_
             detail="Tarefa não encontrada ou você não tem permissão para compartilhá-la",
         )
 
-    # Buscar o usuário com quem compartilhar a tarefa
     user_to_share = db.query(User).filter(User.email == share.user_email).first()
     if not user_to_share:
         raise HTTPException(
@@ -203,7 +208,6 @@ def share_task(task_id: int, share: ShareTask, current_user: User = Depends(get_
             detail="Tarefa já está compartilhada com este usuário",
         )
 
-    # Adicionar o usuário ao relacionamento de compartilhamento
     task.shared_with_users.append(user_to_share)
     db.commit()
 

@@ -30,9 +30,10 @@ class Token(BaseModel):
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     """
-    Endpoint para registrar um novo usuário.
+    RF1: O sistema deve permitir o cadastro de novos usuários
     """
-    # RN1: Validar se o e-mail já está cadastrado
+
+    # RF1-RN1: O e-mail deve ser único por usuário
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
         raise HTTPException(
@@ -40,7 +41,6 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             detail="E-mail já cadastrado",
         )
 
-    # Criar novo usuário com senha hash
     hashed_password = get_password_hash(user.password)
     new_user = User(email=user.email, password=hashed_password)
     db.add(new_user)
@@ -52,10 +52,10 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
-    Endpoint para autenticar um usuário e retornar um token JWT.
-
-    Este endpoint espera dados de formulário com os campos 'username' e 'password'.
+    RF2: O sistema deve permitir o login de usuários
     """
+
+    # RF2-RN1: O login deve ser realizado com o e-mail e senha cadastrados.
     authenticated_user = authenticate_user(form_data.username, form_data.password, db)
     if not authenticated_user:
         raise HTTPException(
@@ -64,7 +64,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Criar token de acesso
     access_token = create_access_token(data={"sub": authenticated_user.email})
 
     return {"access_token": access_token, "token_type": "bearer"}

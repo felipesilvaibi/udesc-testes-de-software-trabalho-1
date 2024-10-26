@@ -46,37 +46,37 @@ O Gerenciador de Tarefas é uma aplicação web que permite aos usuários admini
 
 ## Requisitos Funcionais e Regras de Negócio
 
-### RF1: Cadastro de Usuário
+### RF1: O sistema deve permitir o cadastro de novos usuários
 
-*   **RN1:** O usuário deve fornecer um **e-mail válido** e uma senha com **no mínimo 8 caracteres**.
+*   RN1: O e-mail deve ser único por usuário
 
-### RF2: Login de Usuário
+### RF2: O sistema deve permitir o login de usuários
 
-*   **RN2:** O login deve ser realizado com o **e-mail e senha** cadastrados.
+*   RN1: O login deve ser realizado com o e-mail e senha cadastrados.
 
-### RF3: Criação de Tarefas
+### RF3: O sistema deve permitir que o usuário cadastre novas tarefas
 
-*   **RN3:** A tarefa deve ter um **título único**, descrição e data de vencimento.
+*   RN1: O mesmo usuário não pode ter mais de uma tarefa com o mesmo nome
 
-### RF4: Edição de Tarefas
+### RF4: O sistema deve permitir a edição de tarefas cadastradas
 
-*   **RN4:** Apenas **tarefas não concluídas** podem ser editadas.
+*   RN1: Tarefas concluídas não podem ser editadas
 
-### RF5: Exclusão de Tarefas
+### RF5: O sistema deve permitir a exclusão de tarefas
 
-*   **RN5:** Tarefas **concluídas não podem ser excluídas**.
+*   RN1: Tarefas concluídas não podem ser excluídas
 
-### RF6: Marcar Tarefas como Concluídas
+### RF6: O sistema deve permitir marcar tarefas como concluídas
 
-*   **RN6:** Ao concluir uma tarefa, deve-se registrar a **data de conclusão**.
+*   RN1: Tarefas já concluídas não podem ser concluídas novamente
 
-### RF7: Listagem de Tarefas
+### RF7: O sistema deve permitir a listagem de tarefas
 
-*   **RN7:** O usuário pode **filtrar** tarefas por status (concluídas ou pendentes).
+*   RN1: O usuário deve poder filtrar tarefas por status (concluídas ou pendentes).
 
-### RF8: Compartilhamento de Tarefas
+### RF8: O sistema deve permitir que usuários compartilhem suas tarefas com demais usuários
 
-*   **RN8:** O usuário pode **compartilhar** uma tarefa com outro usuário, permitindo visualização.
+*   RN1: Somente tarefas criadas pelo usuário logado podem ser compartilhadas pelo mesmo
 
 ## Funcionalidades
 
@@ -393,13 +393,13 @@ Os testes cobrem os requisitos funcionais e regras de negócio conforme especifi
 
     *   **Responsabilidades:**
 
-        *   **RF1 - RN1:** Implementação dos endpoints de registro de usuários (`/users/`).
+        *   RF1: O sistema deve permitir o cadastro de novos usuários
 
-        *   **RF2 - RN2:** Implementação dos endpoints de login de usuários (`/users/login`).
+        *   RF2: O sistema deve permitir o login de usuários
 
-        *   **RF3 - RN3:** Desenvolvimento das funcionalidades de criação de tarefas.
+        *   RF3: O sistema deve permitir que o usuário cadastre novas tarefas
 
-        *   **RF5 - RN5:** Implementação das funcionalidades de exclusão de tarefas.
+        *   RF5: O sistema deve permitir a exclusão de tarefas
 
         *   **Testes:** Desenvolvimento de 10 testes unitários e 4 testes de integração relacionados aos requisitos acima.
 
@@ -407,13 +407,13 @@ Os testes cobrem os requisitos funcionais e regras de negócio conforme especifi
 
     *   **Responsabilidades:**
 
-        *   **RF4 - RN4:** Implementação das funcionalidades de edição de tarefas.
+        *   RF4: O sistema deve permitir a edição de tarefas cadastradas
 
-        *   **RF6 - RN6:** Desenvolvimento das funcionalidades de marcação de tarefas como concluídas.
+        *   RF6: O sistema deve permitir marcar tarefas como concluídas
 
-        *   **RF7 - RN7:** Desenvolvimento das funcionalidades de listagem e filtragem de tarefas.
+        *   RF7: O sistema deve permitir a listagem de tarefas
 
-        *   **RF8 - RN8:** Implementação das funcionalidades de compartilhamento de tarefas.
+        *   RF8: O sistema deve permitir que usuários compartilhem suas tarefas com demais usuários
 
         *   **Testes:** Desenvolvimento de 10 testes unitários e 4 testes de integração relacionados aos requisitos acima.
 
