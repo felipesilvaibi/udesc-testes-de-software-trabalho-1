@@ -1,11 +1,15 @@
+from unittest import mock
+
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from database import Base, get_db
-from fastapi.testclient import TestClient
 from main import app
 
 DATABASE_URL = "sqlite:///:memory:"
+
 
 @pytest.fixture(scope="session")
 def engine():
@@ -13,6 +17,7 @@ def engine():
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
+
 
 @pytest.fixture(scope="function")
 def db_session(engine):
@@ -28,6 +33,7 @@ def db_session(engine):
     transaction.rollback()
     connection.close()
 
+
 @pytest.fixture(scope="module")
 def client(db_session):
     def override_get_db():
@@ -40,3 +46,39 @@ def client(db_session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
+
+class MockerFixture:
+    """
+    Classe helper para fornecer métodos `patch` e `patch.object` que gerenciam automaticamente
+    os mocks, iniciando-os e parando-os após o teste.
+    """
+
+    def __init__(self):
+        self.patches = []
+
+    def patch(self, target, **kwargs):
+        patcher = mock.patch(target, **kwargs)
+        mocked_object = patcher.start()
+        self.patches.append(patcher)
+        return mocked_object
+
+    def patch_object(self, target, attribute, **kwargs):
+        patcher = mock.patch.object(target, attribute, **kwargs)
+        mocked_object = patcher.start()
+        self.patches.append(patcher)
+        return mocked_object
+
+    def stop_all(self):
+        for patcher in self.patches:
+            patcher.stop()
+
+
+@pytest.fixture
+def mocker_fixture():
+    """
+    Fixture para fornecer a funcionalidade de `MockerFixture` nos testes.
+    """
+    mocker = MockerFixture()
+    yield mocker
+    mocker.stop_all()  # Finaliza todos os patches ao final do teste

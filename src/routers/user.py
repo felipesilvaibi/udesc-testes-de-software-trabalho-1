@@ -1,31 +1,37 @@
 # src/routers/user.py
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, constr
-from auth import get_password_hash, create_access_token, authenticate_user
-from database import get_db, User
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+
+from auth import authenticate_user, create_access_token, get_password_hash
+from database import User, get_db
 
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
 )
 
+
 # Schemas
 class UserCreate(BaseModel):
     email: EmailStr  # Garante um formato de e-mail válido
     password: constr(min_length=8)  # Garante senha com no mínimo 8 caracteres
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 # Endpoints
+
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -41,6 +47,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             detail="E-mail já cadastrado",
         )
 
+    # RF1-RN2: A senha precisa ser encriptada antes de ser armazenada
     hashed_password = get_password_hash(user.password)
     new_user = User(email=user.email, password=hashed_password)
     db.add(new_user)
@@ -49,8 +56,11 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
     return {"msg": "Usuário registrado com sucesso"}
 
+
 @router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
+):
     """
     RF2: O sistema deve permitir o login de usuários
     """
@@ -67,4 +77,3 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = create_access_token(data={"sub": authenticated_user.email})
 
     return {"access_token": access_token, "token_type": "bearer"}
-

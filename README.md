@@ -49,6 +49,7 @@ O Gerenciador de Tarefas é uma aplicação web que permite aos usuários admini
 ### RF1: O sistema deve permitir o cadastro de novos usuários
 
 *   RN1: O e-mail deve ser único por usuário
+*   RN2: A senha precisa ser armazenada com criptografia unidirecional
 
 ### RF2: O sistema deve permitir o login de usuários
 
@@ -323,69 +324,29 @@ Os testes cobrem os requisitos funcionais e regras de negócio conforme especifi
 
 **Testes de Unidade:**
 
-1.  `test_felipe_auth.py` - RF1 - RN1
+1.  `test_felipe_unit_auth.py` - RF1-RN2, RF2-RN1
+    1. `test_returns_hashed_password_from_plain_text` - RF1-RN2
+    2. `test_hashed_password_matches_original_with_key` - RF1-RN2
+    3. `test_hashed_password_does_not_match_non_original_password` - RF1-RN2
+    4. `test_authenticate_user_success` - RF2-RN1
+    5. `test_authenticate_user_wrong_password` - RF2-RN1
+    6. `test_authenticate_user_nonexistent` - RF2-RN1
 
-2.  `test_felipe_tasks.py` - RF3 - RN3
-
-3.  `test_create_task` - RF3 - RN3
-
-4.  `test_complete_task` - RF5 - RN5
-
-5.  `test_share_task` - RF5 - RN5
-
-6.  `test_task_due_date` - RF3 - RN3
-
-7.  `test_task_overdue` - RF7 - RN7
-
-8.  `test_duplicate_task_title` - RF3 - RN3
-
-9.  `test_shared_task_visibility` - RF5 - RN5
-
-10. `test_unshare_task` - RF5 - RN5
+2.  `test_felipe_unit_tasks.py` - Não validado
 
 **Testes de Integração:**
 
-1.  `test_felipe_integration.py` - RF1 - RN1 e RF2 - RN2
-
-2.  `test_create_task` - RF3 - RN3
-
-3.  `test_share_task` - RF5 - RN5
-
-4.  `test_list_tasks_shared` - RF5 - RN5
+1.  `test_felipe_integration.py` - Não validado
 
 ##### Douglas
 
 **Testes de Unidade:**
 
-1.  `test_douglas_tasks.py` - RF4 - RN4
-
-2.  `test_edit_task` - RF4 - RN4
-
-3.  `test_edit_completed_task` - RF4 - RN4
-
-4.  `test_delete_task` - RF5 - RN5
-
-5.  `test_delete_completed_task` - RF5 - RN5
-
-6.  `test_list_tasks_with_filter` - RF7 - RN7
-
-7.  `test_list_tasks_with_filter_pending` - RF7 - RN7
-
-8.  `test_share_task_douglas` - RF8 - RN8
-
-9.  `test_unshare_task_douglas` - RF8 - RN8
-
-10. `test_delete_shared_task_douglas` - RF5 - RF8
+1.  `test_douglas_unit_tasks.py` - Não validado
 
 **Testes de Integração:**
 
-1.  `test_douglas_integration.py` - RF1 - RN1 e RF2 - RN2
-
-2.  `test_edit_task` - RF4 - RN4
-
-3.  `test_delete_task` - RF5 - RN5
-
-4.  `test_list_tasks_owner` - RF7 - RN7
+1.  `test_douglas_integration.py` - Não validado
 
 ## Autores
 
