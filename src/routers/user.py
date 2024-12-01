@@ -16,8 +16,9 @@ router = APIRouter(
 
 # Schemas
 class UserCreate(BaseModel):
-    email: EmailStr  # Garante um formato de e-mail válido
-    password: constr(min_length=8)  # Garante senha com no mínimo 8 caracteres
+    email: EmailStr
+    name: constr(min_length=1)
+    password: constr(min_length=8)
 
 
 class UserLogin(BaseModel):
@@ -49,7 +50,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
     # RF1-RN2: A senha precisa ser encriptada antes de ser armazenada
     hashed_password = get_password_hash(user.password)
-    new_user = User(email=user.email, password=hashed_password)
+    new_user = User(email=user.email, name=user.name, password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
