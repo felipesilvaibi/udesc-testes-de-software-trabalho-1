@@ -20,7 +20,6 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
-# Tabela de associação para compartilhamento de tarefas (RF8, RN8)
 task_shares = Table(
     "task_shares",
     Base.metadata,

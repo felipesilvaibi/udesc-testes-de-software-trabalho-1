@@ -36,11 +36,6 @@ class Token(BaseModel):
 
 @router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    """
-    RF1: O sistema deve permitir o cadastro de novos usuários
-    """
-
-    # RF1-RN1: O e-mail deve ser único por usuário
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
         raise HTTPException(
@@ -48,7 +43,6 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
             detail="E-mail já cadastrado",
         )
 
-    # RF1-RN2: A senha precisa ser encriptada antes de ser armazenada
     hashed_password = get_password_hash(user.password)
     new_user = User(email=user.email, name=user.name, password=hashed_password)
     db.add(new_user)
@@ -62,11 +56,6 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
-    """
-    RF2: O sistema deve permitir o login de usuários
-    """
-
-    # RF2-RN1: O login deve ser realizado com o e-mail e senha cadastrados.
     authenticated_user = authenticate_user(form_data.username, form_data.password, db)
     if not authenticated_user:
         raise HTTPException(

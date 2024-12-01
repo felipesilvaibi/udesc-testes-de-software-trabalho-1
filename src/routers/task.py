@@ -52,11 +52,6 @@ def create_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    RF3: O sistema deve permitir que o usuário cadastre novas tarefas
-    """
-
-    # RF3-RN1: O mesmo usuário não pode ter mais de uma tarefa com o mesmo nome
     existing_task = (
         db.query(Task)
         .filter(Task.title == task.title, Task.owner_id == current_user.id)
@@ -85,10 +80,6 @@ def update_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    RF4: O sistema deve permitir a edição de tarefas cadastradas
-    """
-
     existing_task = (
         db.query(Task)
         .filter(Task.id == task_id, Task.owner_id == current_user.id)
@@ -100,7 +91,6 @@ def update_task(
             detail="Tarefa não encontrada",
         )
 
-    # RF4-RN1: Tarefas concluídas não podem ser editadas
     if existing_task.is_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -134,10 +124,6 @@ def delete_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    RF5: O sistema deve permitir a exclusão de tarefas
-    """
-
     task = (
         db.query(Task)
         .filter(Task.id == task_id, Task.owner_id == current_user.id)
@@ -149,7 +135,6 @@ def delete_task(
             detail="Tarefa não encontrada",
         )
 
-    # RF5-RN1: Tarefas concluídas não podem ser excluídas
     if task.is_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -170,10 +155,6 @@ def complete_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    RF6: O sistema deve permitir marcar tarefas como concluídas
-    """
-
     task = (
         db.query(Task)
         .filter(Task.id == task_id, Task.owner_id == current_user.id)
@@ -185,7 +166,6 @@ def complete_task(
             detail="Tarefa não encontrada",
         )
 
-    # RF6-RN1: Tarefas já concluídas não podem ser concluídas novamente
     if task.is_completed:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -206,16 +186,11 @@ def list_tasks(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    RF7: O sistema deve permitir a listagem de tarefas
-    """
-
     query = db.query(Task).filter(
         (Task.owner_id == current_user.id)
         | (Task.shared_with_users.any(id=current_user.id))
     )
 
-    # RF7-RN1: O usuário deve poder filtrar tarefas por status (concluídas ou pendentes).
     if status:
         if status.lower() == "concluídas":
             query = query.filter(Task.is_completed == True)
@@ -238,11 +213,6 @@ def share_task(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    RF8: O sistema deve permitir que usuários compartilhem suas tarefas com demais usuários
-    """
-
-    # RF8-RN1: Somente tarefas criadas pelo usuário logado podem ser compartilhadas pelo mesmo
     task = (
         db.query(Task)
         .filter(Task.id == task_id, Task.owner_id == current_user.id)
