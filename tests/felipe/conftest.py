@@ -1,3 +1,5 @@
+# tests/felipe/conftest.py
+
 from unittest import mock
 
 import pytest
@@ -34,7 +36,7 @@ def db_session(engine):
     connection.close()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")  # Alterado de "module" para "function"
 def client(db_session):
     def override_get_db():
         try:
