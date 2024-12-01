@@ -1,12 +1,15 @@
-import pytest
-from fastapi.testclient import TestClient
-from main import app
-from database import get_db, Base, User, Task
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from datetime import date
 
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from database import Base, Task, User, get_db
+from main import app
+
 DATABASE_URL = "sqlite:///:memory:"
+
 
 @pytest.fixture(scope="module")
 def client():
@@ -28,21 +31,27 @@ def client():
     db_session.close()
     engine.dispose()
 
+
 def test_register_and_login(client):
     """
     RF1 - RN1 e RF2 - RN2: Testa o registro de usuário e o login subsequente para obter o token de acesso.
     """
     # Registrar um novo usuário
-    response = client.post("/users/", json={"email": "douglas@test.com", "password": "senha789"})
+    response = client.post(
+        "/users/", json={"email": "douglas@test.com", "password": "senha789"}
+    )
     assert response.status_code == 201
     assert response.json() == {"msg": "Usuário registrado com sucesso"}
 
     # Fazer login com o usuário registrado
-    response = client.post("/users/login", data={"username": "douglas@test.com", "password": "senha789"})
+    response = client.post(
+        "/users/login", data={"username": "douglas@test.com", "password": "senha789"}
+    )
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
+
 
 def test_edit_task(client):
     """
@@ -53,27 +62,29 @@ def test_edit_task(client):
     task = Task(
         title="Tarefa Original Douglas",
         description="Descrição original",
-        due_date=date.today(),
-        owner_id=user.id
+        owner_id=user.id,
     )
     db_session = next(get_db())
     db_session.add_all([user, task])
     db_session.commit()
 
     # Fazer login
-    response = client.post("/users/login", data={"username": "douglas@test.com", "password": "senha789"})
+    response = client.post(
+        "/users/login", data={"username": "douglas@test.com", "password": "senha789"}
+    )
     token = response.json()["access_token"]
 
     # Editar a tarefa
     response = client.put(
         f"/tasks/{task.id}",
         json={"title": "Tarefa Editada Douglas", "description": "Descrição editada"},
-        headers={"Authorization": f"Bearer {token}"}
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
     data = response.json()
     assert data["title"] == "Tarefa Editada Douglas"
     assert data["description"] == "Descrição editada"
+
 
 def test_mark_task_completed(client):
     """
@@ -84,26 +95,27 @@ def test_mark_task_completed(client):
     task = Task(
         title="Tarefa a Ser Concluída Douglas",
         description="Descrição",
-        due_date=date.today(),
-        owner_id=user.id
+        owner_id=user.id,
     )
     db_session = next(get_db())
     db_session.add_all([user, task])
     db_session.commit()
 
     # Fazer login
-    response = client.post("/users/login", data={"username": "douglas@test.com", "password": "senha789"})
+    response = client.post(
+        "/users/login", data={"username": "douglas@test.com", "password": "senha789"}
+    )
     token = response.json()["access_token"]
 
     # Marcar a tarefa como concluída
     response = client.post(
-        f"/tasks/{task.id}/complete",
-        headers={"Authorization": f"Bearer {token}"}
+        f"/tasks/{task.id}/complete", headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 200
     data = response.json()
     assert data["msg"] == "Tarefa marcada como concluída"
     assert data["completion_date"] is not None
+
 
 def test_list_tasks_owner(client):
     """
@@ -114,30 +126,30 @@ def test_list_tasks_owner(client):
     task1 = Task(
         title="Tarefa Douglas 1",
         description="Descrição 1",
-        due_date=date.today(),
         owner_id=user.id,
-        is_completed=False
+        is_completed=False,
     )
     task2 = Task(
         title="Tarefa Douglas 2",
         description="Descrição 2",
-        due_date=date.today(),
         owner_id=user.id,
-        is_completed=True
+        is_completed=True,
     )
     db_session = next(get_db())
     db_session.add_all([user, task1, task2])
     db_session.commit()
 
     # Fazer login
-    response = client.post("/users/login", data={"username": "douglas@test.com", "password": "senha789"})
+    response = client.post(
+        "/users/login", data={"username": "douglas@test.com", "password": "senha789"}
+    )
     token = response.json()["access_token"]
 
     # Listar tarefas concluídas
     response = client.get(
         "/tasks/",
         headers={"Authorization": f"Bearer {token}"},
-        params={"status": "concluídas"}
+        params={"status": "concluídas"},
     )
     assert response.status_code == 200
     data = response.json()

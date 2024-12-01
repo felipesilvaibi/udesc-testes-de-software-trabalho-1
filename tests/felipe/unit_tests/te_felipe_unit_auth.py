@@ -6,11 +6,13 @@ import auth
 from auth import authenticate_user, get_password_hash, verify_password
 from database import User
 
+class teste(BaseModel)
 
 def test_returns_hashed_password_from_plain_text():
     """
-    RF1: O sistema deve permitir o cadastro de novos usuários
-    RF1-RN2: A senha precisa ser armazenada com criptografia unidirecional
+    RF1: O sistema deve permitir manter usuários
+    RF1-RN1: Deve ser possível cadastrar novos usuários com senha criptografada de forma unidirecional.
+    UT001: Criptografia da senha
     """
 
     # Arrange
@@ -26,8 +28,9 @@ def test_returns_hashed_password_from_plain_text():
 
 def test_hashed_password_matches_original_with_key():
     """
-    RF1: O sistema deve permitir o cadastro de novos usuários
-    RF1-RN2: A senha precisa ser armazenada com criptografia unidirecional
+    RF1: O sistema deve permitir manter usuários
+    RF1-RN1: Deve ser possível cadastrar novos usuários com senha criptografada de forma unidirecional.
+    UT002: Consistência do hash para a mesma senha
     """
 
     # Arrange
@@ -43,8 +46,9 @@ def test_hashed_password_matches_original_with_key():
 
 def test_hashed_password_does_not_match_non_original_password():
     """
-    RF1: O sistema deve permitir o cadastro de novos usuários
-    RF1-RN2: A senha precisa ser armazenada com criptografia unidirecional
+    RF1: O sistema deve permitir manter usuários
+    RF1-RN1: Deve ser possível cadastrar novos usuários com senha criptografada de forma unidirecional.
+    UT003: Diferenciação de hashes para senhas diferentes
     """
 
     # Arrange
@@ -60,8 +64,9 @@ def test_hashed_password_does_not_match_non_original_password():
 
 def test_authenticate_user_success():
     """
-    RF2: O sistema deve permitir o login de usuários.
-    RF2-RN1: O login deve ser realizado com o e-mail e senha cadastrados.
+    RF1: O sistema deve permitir manter usuários
+    RF1-RN2: O usuário deve poder acessar o sistema com o e-mail e senha cadastrados.
+    UT004: Autenticação com credenciais corretas
     """
 
     # Arrange
@@ -88,8 +93,9 @@ def test_authenticate_user_success():
 
 def test_authenticate_user_wrong_password(mocker_fixture):
     """
-    RF2: O sistema deve permitir o login de usuários.
-    RF2-RN1: O login deve ser realizado com o e-mail e senha cadastrados.
+    RF1: O sistema deve permitir manter usuários
+    RF1-RN2: O usuário deve poder acessar o sistema com o e-mail e senha cadastrados.
+    UT005: Autenticação com senha incorreta
     """
 
     # Arrange
@@ -121,8 +127,9 @@ def test_authenticate_user_wrong_password(mocker_fixture):
 
 def test_authenticate_user_nonexistent(mocker_fixture):
     """
-    RF2: O sistema deve permitir o login de usuários.
-    RF2-RN1: O login deve ser realizado com o e-mail e senha cadastrados.
+    RF1: O sistema deve permitir manter usuários
+    RF1-RN2: O usuário deve poder acessar o sistema com o e-mail e senha cadastrados.
+    UT006: Autenticação de usuário não cadastrado
     """
 
     # Arrange

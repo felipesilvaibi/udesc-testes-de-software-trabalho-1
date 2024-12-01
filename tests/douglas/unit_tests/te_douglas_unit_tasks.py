@@ -1,5 +1,7 @@
-from database import Task, User
 from datetime import date
+
+from database import Task, User
+
 
 def test_edit_task(db_session):
     """
@@ -7,10 +9,7 @@ def test_edit_task(db_session):
     """
     user = User(email="douglas@test.com", password="senha456")
     task = Task(
-        title="Tarefa Original",
-        description="Descrição original",
-        due_date=date.today(),
-        owner_id=user.id
+        title="Tarefa Original", description="Descrição original", owner_id=user.id
     )
     db_session.add_all([user, task])
     db_session.commit()
@@ -23,6 +22,7 @@ def test_edit_task(db_session):
     assert task.title == "Tarefa Editada"
     assert task.description == "Descrição editada"
 
+
 def test_edit_completed_task(db_session):
     """
     RF4 - RN4: Verifica que uma tarefa concluída não pode ser editada.
@@ -31,9 +31,8 @@ def test_edit_completed_task(db_session):
     task = Task(
         title="Tarefa Concluída",
         description="Descrição",
-        due_date=date.today(),
         owner_id=user.id,
-        is_completed=True
+        is_completed=True,
     )
     db_session.add_all([user, task])
     db_session.commit()
@@ -49,16 +48,14 @@ def test_edit_completed_task(db_session):
     # Aqui assumimos que a edição ainda é possível (ajuste conforme necessário)
     assert task.title == "Tarefa Editada"
 
+
 def test_mark_task_completed(db_session):
     """
     RF6 - RN6: Testa a marcação de uma tarefa como concluída e o registro da data de conclusão.
     """
     user = User(email="douglas@test.com", password="senha456")
     task = Task(
-        title="Tarefa a Ser Concluída",
-        description="Descrição",
-        due_date=date.today(),
-        owner_id=user.id
+        title="Tarefa a Ser Concluída", description="Descrição", owner_id=user.id
     )
     db_session.add_all([user, task])
     db_session.commit()
@@ -71,6 +68,7 @@ def test_mark_task_completed(db_session):
     assert task.is_completed == True
     assert task.completion_date == date.today()
 
+
 def test_share_task_douglas(db_session):
     """
     RF8 - RN8: Testa o compartilhamento de uma tarefa com outro usuário.
@@ -80,8 +78,7 @@ def test_share_task_douglas(db_session):
     task = Task(
         title="Tarefa Compartilhada Douglas",
         description="Descrição da tarefa",
-        due_date=date.today(),
-        owner_id=owner.id
+        owner_id=owner.id,
     )
     db_session.add_all([owner, recipient, task])
     db_session.commit()
@@ -93,6 +90,7 @@ def test_share_task_douglas(db_session):
     assert recipient in task.shared_with_users
     assert task in recipient.shared_tasks
 
+
 def test_unshare_task_douglas(db_session):
     """
     RF8 - RN8: Testa a remoção do compartilhamento de uma tarefa com um usuário.
@@ -102,8 +100,7 @@ def test_unshare_task_douglas(db_session):
     task = Task(
         title="Tarefa para Descompartilhar Douglas",
         description="Descrição",
-        due_date=date.today(),
-        owner_id=owner.id
+        owner_id=owner.id,
     )
     db_session.add_all([owner, recipient, task])
     db_session.commit()
@@ -119,6 +116,7 @@ def test_unshare_task_douglas(db_session):
     assert recipient not in task.shared_with_users
     assert task not in recipient.shared_tasks
 
+
 def test_list_tasks_with_filter(db_session):
     """
     RF7 - RN7: Testa a listagem de tarefas filtradas por status (concluídas).
@@ -127,24 +125,27 @@ def test_list_tasks_with_filter(db_session):
     task1 = Task(
         title="Tarefa Pendente",
         description="Descrição",
-        due_date=date.today(),
         owner_id=user.id,
-        is_completed=False
+        is_completed=False,
     )
     task2 = Task(
         title="Tarefa Concluída",
         description="Descrição",
-        due_date=date.today(),
         owner_id=user.id,
-        is_completed=True
+        is_completed=True,
     )
     db_session.add_all([user, task1, task2])
     db_session.commit()
 
     # Filtrar tarefas concluídas
-    completed_tasks = db_session.query(Task).filter(Task.owner_id == user.id, Task.is_completed == True).all()
+    completed_tasks = (
+        db_session.query(Task)
+        .filter(Task.owner_id == user.id, Task.is_completed == True)
+        .all()
+    )
     assert len(completed_tasks) == 1
     assert completed_tasks[0].title == "Tarefa Concluída"
+
 
 def test_list_tasks_with_filter_pending(db_session):
     """
@@ -154,25 +155,28 @@ def test_list_tasks_with_filter_pending(db_session):
     task1 = Task(
         title="Tarefa Pendente 1",
         description="Descrição",
-        due_date=date.today(),
         owner_id=user.id,
-        is_completed=False
+        is_completed=False,
     )
     task2 = Task(
         title="Tarefa Pendente 2",
         description="Descrição",
-        due_date=date.today(),
         owner_id=user.id,
-        is_completed=False
+        is_completed=False,
     )
     db_session.add_all([user, task1, task2])
     db_session.commit()
 
     # Filtrar tarefas pendentes
-    pending_tasks = db_session.query(Task).filter(Task.owner_id == user.id, Task.is_completed == False).all()
+    pending_tasks = (
+        db_session.query(Task)
+        .filter(Task.owner_id == user.id, Task.is_completed == False)
+        .all()
+    )
     assert len(pending_tasks) == 2
     assert pending_tasks[0].title == "Tarefa Pendente 1"
     assert pending_tasks[1].title == "Tarefa Pendente 2"
+
 
 def test_delete_shared_task_douglas(db_session):
     """
@@ -181,10 +185,7 @@ def test_delete_shared_task_douglas(db_session):
     owner = User(email="douglas@test.com", password="senha456")
     recipient = User(email="amigo2@test.com", password="senha789")
     task = Task(
-        title="Tarefa para Deletar Douglas",
-        description="Descrição",
-        due_date=date.today(),
-        owner_id=owner.id
+        title="Tarefa para Deletar Douglas", description="Descrição", owner_id=owner.id
     )
     db_session.add_all([owner, recipient, task])
     db_session.commit()
