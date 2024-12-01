@@ -67,11 +67,12 @@ def test_register_user_database_communication(db_session: Session):
     # Hasheia a senha
     hashed_password = get_password_hash(user_data["password"])
 
-    # Act (Ação)
-    # Cria um novo usuário diretamente usando o db_session
     new_user = User(
         name=user_data["name"], email=user_data["email"], password=hashed_password
     )
+
+    # Act (Ação)
+    # Cria um novo usuário diretamente usando o db_session
     db_session.add(new_user)
     db_session.commit()
     db_session.refresh(new_user)
