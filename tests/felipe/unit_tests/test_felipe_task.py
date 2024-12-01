@@ -31,12 +31,6 @@ def test_create_task_unique_title():
     mock_filter = mock_query.filter.return_value
     mock_filter.first.return_value = None  # Nenhuma tarefa existente
 
-    # Função auxiliar para simular a adição de uma nova tarefa
-    def add_task(task):
-        task.id = 1  # Simula a atribuição de um ID após inserção no banco
-
-    mock_db.add.side_effect = add_task
-
     # Dados da nova tarefa a ser criada
     task_data = TaskCreate(
         title="Comprar leite",
