@@ -35,9 +35,9 @@ def test_user_login_endpoint(client: TestClient, db_session: Session):
     db_session.commit()
     db_session.refresh(user)
 
-    # Act: Tenta fazer login via endpoint
     login_data = {"username": user_data["email"], "password": user_data["password"]}
 
+    # Act: Tenta fazer login via endpoint
     response = client.post("/users/login", data=login_data)
 
     # Assert
@@ -78,7 +78,6 @@ def test_user_login_database_communication(db_session: Session):
     db_session.refresh(user)
 
     # Act: Autentica o usuário diretamente usando a função authenticate_user
-
     authenticated_user = authenticate_user(
         email=user_data["email"], password=user_data["password"], db=db_session
     )
