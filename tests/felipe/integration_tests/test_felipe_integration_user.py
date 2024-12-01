@@ -82,3 +82,4 @@ def test_register_user_database_communication(db_session: Session):
     user_in_db = db_session.query(User).filter_by(email=user_data["email"]).first()
     assert user_in_db.name == user_data["name"]
     assert user_in_db.email == user_data["email"]
+    assert user_in_db.password == hashed_password
