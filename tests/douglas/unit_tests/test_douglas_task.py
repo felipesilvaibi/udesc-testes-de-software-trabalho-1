@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from database import Task, User
-from routers.task import update_task
+from routers.task import TaskUpdate, update_task
 
 
 def test_update_task_not_completed_with_id():
@@ -24,12 +24,15 @@ def test_update_task_not_completed_with_id():
     """
 
     # Arrange (Preparação)
+    task_id = 2
+    titulo_atualizado = "título atualizado"
+
     mock_db = Mock(spec=Session)
     mock_current_user = User(id=1, email="user@example.com")
 
     # Criando uma tarefa não concluída
     task = Task(
-        id=2,  # ID da tarefa sendo usada como entrada
+        id=task_id,  # ID da tarefa sendo usada como entrada
         title="Tarefa Pendente",
         description="Esta tarefa não foi concluída",
         is_completed=False,  # A tarefa não está concluída
@@ -37,30 +40,17 @@ def test_update_task_not_completed_with_id():
     )
 
     # Simulando a tarefa no mock DB
-    mock_db.query.return_value.filter.return_value.first.return_value = task
-
-    # ID da tarefa a ser editada e os novos dados
-    task_id = 2
-    updated_task_data = {
-        "title": "título atualizado",
-        "description": "Descrição atualizada da tarefa",
-    }
+    mock_db.query.return_value.filter.return_value.first.side_effect = [task, None]
 
     # Act (Ação)
-    task_to_update = mock_db.query.return_value.filter.return_value.first()
-    if (
-        task_to_update
-        and task_to_update.id == task_id
-        and not task_to_update.is_completed
-    ):
-        # Atualizando os dados da tarefa
-        task_to_update.title = updated_task_data["title"]
-        task_to_update.description = updated_task_data["description"]
-
+    response = update_task(
+        task_id,
+        TaskUpdate(title=titulo_atualizado),
+        mock_current_user,
+        mock_db,
+    )
     # Assert (Verificação)
-    assert task_to_update.title == "título atualizado"
-    assert task_to_update.description == "Descrição atualizada da tarefa"
-    assert not task_to_update.is_completed  # Status permanece pendente
+    assert response.title == titulo_atualizado
 
 
 def test_update_task_completed():
@@ -75,6 +65,9 @@ def test_update_task_completed():
     """
 
     # Arrange (Preparação)
+    task_id = 2
+    titulo_atualizado = "título atualizado"
+
     mock_db = Mock(spec=Session)
     mock_current_user = User(id=1, email="user@example.com")
 
@@ -90,34 +83,19 @@ def test_update_task_completed():
     # Simulando a tarefa no mock DB
     mock_db.query.return_value.filter.return_value.first.return_value = task
 
-    # Novos dados para atualizar a tarefa concluída
-    updated_task_data = {
-        "title": "Tarefa Completa",
-        "description": "Nova descrição da tarefa",
-    }
-
     # Act (Ação)
-    task_to_update = mock_db.query.return_value.filter.return_value.first()
-
-    # Verificando se a tarefa está concluída e, em caso afirmativo, levantando a exceção
     with pytest.raises(HTTPException) as exc_info:
-        if task_to_update.is_completed:
-            raise HTTPException(
-                status_code=400, detail="Tarefa concluída não pode ser editada."
-            )
+        update_task(
+            task_id,
+            TaskUpdate(title=titulo_atualizado),
+            mock_current_user,
+            mock_db,
+        )
 
     # Assert (Verificação)
     # Verificar se a exceção foi levantada corretamente
     assert exc_info.value.status_code == 400
-    assert exc_info.value.detail == "Tarefa concluída não pode ser editada."
-
-    # Verificar que a tarefa não foi alterada
-    assert task.title == "Tarefa Completa"
-    assert task.description == "Esta tarefa foi concluída"
-
-    # Verifica que commit e refresh não foram chamados
-    mock_db.commit.assert_not_called()
-    mock_db.refresh.assert_not_called()
+    assert exc_info.value.detail == "Tarefas concluídas não podem ser editadas"
 
 
 def test_update_nonexistent_task():
