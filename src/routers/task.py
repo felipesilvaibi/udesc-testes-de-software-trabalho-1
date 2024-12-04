@@ -182,7 +182,7 @@ def complete_task(
 
 @router.get("/", response_model=List[TaskResponse], status_code=status.HTTP_200_OK)
 def list_tasks(
-    status: Optional[str] = None,
+    task_status: Optional[str] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -191,10 +191,10 @@ def list_tasks(
         | (Task.shared_with_users.any(id=current_user.id))
     )
 
-    if status:
-        if status.lower() == "concluídas":
+    if task_status:
+        if task_status.lower() == "concluídas":
             query = query.filter(Task.is_completed == True)
-        elif status.lower() == "pendentes":
+        elif task_status.lower() == "pendentes":
             query = query.filter(Task.is_completed == False)
         else:
             raise HTTPException(
