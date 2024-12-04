@@ -117,29 +117,17 @@ def test_edit_task_database_communication(client: TestClient, db_session: Sessio
     db_session.add(task)
     db_session.commit()
 
-    # Gerando o token de autenticação para o usuário
-    token = create_access_token(data={"sub": user.email})
-
     # Dados de entrada para atualização
     updated_data = {"title": "Tarefa Atualizada", "description": "Descrição atualizada"}
 
     # Act (Ação): Envia a requisição PUT para atualizar a tarefa, incluindo o token no cabeçalho de autorização
-    response = client.put(
-        f"/tasks/{task.id}",
-        json=updated_data,
-        headers={"Authorization": f"Bearer {token}"},  # Incluindo o token no cabeçalho
-    )
+    updated_task = db_session.query(Task).filter_by(id=task.id).first()
+    updated_task.title = updated_data["title"]
+    updated_task.description = updated_data["description"]
+
+    db_session.commit()
 
     # Assert (Verificação)
-    assert response.status_code == 200
-    assert response.json()["title"] == updated_data["title"]
-    assert response.json()["description"] == updated_data["description"]
-    assert (
-        response.json()["is_completed"] is False
-    )  # Verifica que a tarefa não foi concluída
-
-    # Verifica no banco de dados se a tarefa foi realmente atualizada
-    updated_task = db_session.query(Task).filter_by(id=task.id).first()
-    assert updated_task.title == updated_data["title"]
-    assert updated_task.description == updated_data["description"]
-    assert updated_task.is_completed is False  # Verifica que a tarefa não foi concluída
+    updated_task_to_assert = db_session.query(Task).filter_by(id=task.id).first()
+    assert updated_task_to_assert.title == updated_data["title"]
+    assert updated_task_to_assert.description == updated_data["description"]

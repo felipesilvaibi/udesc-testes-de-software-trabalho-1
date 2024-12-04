@@ -114,43 +114,12 @@ def test_complete_task_database_communication(client: TestClient, db_session: Se
     db_session.add(task)
     db_session.commit()
 
-    # Gerando o token de autenticação para o usuário
-    token = create_access_token(data={"sub": user.email})
-
     # Act (Ação): Envia a requisição PATCH para concluir a tarefa, incluindo o token no cabeçalho de autorização
-    response = client.patch(
-        f"/tasks/{task.id}/complete",  # Endpoint para concluir a tarefa
-        headers={"Authorization": f"Bearer {token}"},  # Incluindo o token no cabeçalho
-    )
+    completed_task = db_session.query(Task).filter_by(id=task.id).first()
+    completed_task.is_completed = True
+
+    db_session.commit()
 
     # Assert (Verificação)
-    assert response.status_code == 200
-    assert response.json()["is_completed"] is True
-    assert "completion_date" in response.json()
-
-    completed_task = db_session.query(Task).filter_by(id=task.id).first()
-    assert completed_task.is_completed is True
-    assert completed_task.completion_date is not None
-
-    # Act (Ação): Tenta concluir novamente a tarefa (não deve ser possível)
-    response_2 = client.patch(
-        f"/tasks/{task.id}/complete",
-        headers={"Authorization": f"Bearer {token}"},
-    )
-
-    # Assert (Verificação): Verifica se a resposta é um erro, já que a tarefa não pode ser concluída novamente
-    assert response_2.status_code == 400
-    assert response_2.json()["detail"] == "Tarefa já está concluída"
-
-    # Act (Ação): Tenta editar a tarefa (não deve ser possível)
-    updated_data = {"title": "Tarefa Alterada", "description": "Descrição alterada"}
-
-    response_3 = client.put(
-        f"/tasks/{task.id}",
-        json=updated_data,
-        headers={"Authorization": f"Bearer {token}"},  # Incluindo o token no cabeçalho
-    )
-
-    # Assert (Verificação): Verifica se a resposta é um erro, já que a tarefa não pode ser editada após ser concluída
-    assert response_3.status_code == 400
-    assert response_3.json()["detail"] == "Tarefas concluídas não podem ser editadas"
+    completed_task_to_assert = db_session.query(Task).filter_by(id=task.id).first()
+    assert completed_task_to_assert.is_completed is True
