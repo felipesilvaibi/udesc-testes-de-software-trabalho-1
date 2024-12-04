@@ -7,7 +7,14 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from database import Task, User
-from routers.task import TaskUpdate, update_task
+from routers.task import (
+    ShareTask,
+    TaskUpdate,
+    complete_task,
+    list_tasks,
+    share_task,
+    update_task,
+)
 
 
 def test_update_task_not_completed_with_id():
@@ -98,187 +105,109 @@ def test_update_task_completed():
     assert exc_info.value.detail == "Tarefas concluídas não podem ser editadas"
 
 
-def test_update_nonexistent_task():
+def test_update_task_not_found():
     """
     CT13: Edição de tarefa inexistente
     Entradas:
-        Id: -2
+        Entrada 1: ID de tarefa inexistente (ex.: "123456").
+        Entrada 2: Novos dados para a tarefa.
     Resultado Esperado:
         O sistema retorna erro informando que a tarefa não foi encontrada.
     Pós-condições:
-        O sistema não encontra a tarefa e retorna uma mensagem de erro.
+        O sistema não altera nada, já que a tarefa não existe.
     """
 
     # Arrange (Preparação)
+    task_id = 123456  # ID de tarefa inexistente
+    titulo_atualizado = "Tarefa atualizada"
+
     mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
 
-    # ID da tarefa inexistente
-    task_id = -2
-    updated_task_data = {
-        "title": "Tarefa Inexistente Atualizada",
-        "description": "Descrição atualizada",
-    }
-
-    # Simulando que nenhuma tarefa é encontrada no banco de dados
+    # Simulando que não encontramos a tarefa no mock DB
     mock_db.query.return_value.filter.return_value.first.return_value = None
 
-    # Act (Ação) e Assert (Verificação)
+    # Act (Ação)
     with pytest.raises(HTTPException) as exc_info:
-        task_to_update = mock_db.query.return_value.filter.return_value.first()
-        if not task_to_update:
-            raise HTTPException(
-                status_code=404, detail=f"Tarefa com ID {task_id} não foi encontrada."
-            )
+        update_task(
+            task_id,
+            TaskUpdate(title=titulo_atualizado),
+            mock_current_user,
+            mock_db,
+        )
 
-    # Verificação do erro levantado
+    # Assert (Verificação)
+    # Verificar se a exceção foi levantada corretamente
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == f"Tarefa com ID {task_id} não foi encontrada."
+    assert exc_info.value.detail == "Tarefa não encontrada"
 
 
 def test_mark_task_as_completed():
     """
     CT14: Conclusão de tarefas não concluídas
     Entradas:
-        Entrada 1: ID de uma tarefa pendente (exemplo: ID "002").
-        Entrada 2: ID de uma tarefa já concluída.
+        Entrada 1: ID de uma tarefa pendente.
     Resultado Esperado:
-        Para a tarefa pendente, o sistema marca como concluída com sucesso.
-        Para a tarefa já concluída, o sistema retorna um aviso informando que já está concluída.
+        O sistema marca a tarefa como concluída com sucesso.
     Pós-condições:
         O sistema guarda a mudança de status para a tarefa pendente.
     """
 
     # Arrange (Preparação)
+    task_id = 2  # ID da tarefa pendente
     mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
 
-    # Tarefa pendente
-    pending_task = Task(
-        id=2,
+    # Criando uma tarefa não concluída (status False)
+    task = Task(
+        id=task_id,
         title="Tarefa Pendente",
-        description="Descrição da tarefa pendente",
-        is_completed=False,
-        owner_id=1,
+        description="Esta tarefa não foi concluída",
+        is_completed=False,  # A tarefa não está concluída
+        owner_id=mock_current_user.id,
     )
 
-    # Tarefa já concluída
-    completed_task = Task(
-        id=3,
-        title="Tarefa Concluída",
-        description="Descrição da tarefa concluída",
-        is_completed=True,
-        owner_id=1,
-    )
+    # Simulando que a tarefa foi encontrada no mock DB
+    mock_db.query.return_value.filter.return_value.first.return_value = task
 
-    # Simulando tarefas no mock DB
-    def mock_get_task(task_id):
-        if task_id == 2:
-            return pending_task
-        elif task_id == 3:
-            return completed_task
-        else:
-            return None
+    # Act (Ação)
+    response = complete_task(task_id, mock_current_user, mock_db)
 
-    mock_db.query.return_value.filter.return_value.first.side_effect = mock_get_task
-
-    # Act & Assert (Ação e Verificação)
-
-    # Cenário 1: Concluir tarefa pendente
-    task_to_complete = mock_db.query.return_value.filter.return_value.first(task_id=2)
-    if not task_to_complete:
-        raise HTTPException(status_code=404, detail="Tarefa não encontrada.")
-    if not task_to_complete.is_completed:
-        task_to_complete.is_completed = True  # Marca como concluída
-        status_message = "Tarefa marcada como concluída com sucesso."
-    else:
-        status_message = "A tarefa já está concluída."
-
-    assert task_to_complete.is_completed is True
-    assert status_message == "Tarefa marcada como concluída com sucesso."
-
-    # Cenário 2: Tentar concluir tarefa já concluída
-    task_to_complete = mock_db.query.return_value.filter.return_value.first(task_id=3)
-    if not task_to_complete:
-        raise HTTPException(status_code=404, detail="Tarefa não encontrada.")
-    if not task_to_complete.is_completed:
-        task_to_complete.is_completed = True  # Marca como concluída
-        status_message = "Tarefa marcada como concluída com sucesso."
-    else:
-        status_message = "A tarefa já está concluída."
-
-    assert task_to_complete.is_completed is True
-    assert status_message == "A tarefa já está concluída."
+    # Assert (Verificação)
+    # Verificar se a exceção foi levantada corretamente
+    assert response.is_completed is True
 
 
-def test_prevent_marking_already_completed_task():
+def test_prevent_task_from_being_completed_if_already_completed():
     """
     CT15: Impedir conclusão de tarefas já concluídas
-    Entradas:
-        Entrada 1: ID de tarefa já concluída (ex.: "001").
-        Entrada 2: ID de tarefa não concluída.
-    Resultado Esperado:
-        Para a tarefa já concluída, o sistema retorna erro informando que já está concluída.
-        Para a tarefa não concluída, a tarefa é marcada como concluída com sucesso.
-    Pós-condições:
-        A tarefa já concluída mantém o status "concluída".
     """
 
     # Arrange (Preparação)
+    task_id = 2  # ID da tarefa pendente
     mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
 
-    # Tarefa já concluída
-    completed_task = Task(
-        id=1,
-        title="Tarefa Já Concluída",
-        description="Descrição da tarefa já concluída",
-        is_completed=True,
-        owner_id=1,
+    # Criando uma tarefa não concluída (status False)
+    task = Task(
+        id=task_id,
+        title="Tarefa Pendente",
+        description="Esta tarefa não foi concluída",
+        is_completed=True,  # A tarefa não está concluída
+        owner_id=mock_current_user.id,
     )
 
-    # Tarefa não concluída
-    pending_task = Task(
-        id=2,
-        title="Tarefa Não Concluída",
-        description="Descrição da tarefa não concluída",
-        is_completed=False,
-        owner_id=1,
-    )
+    # Simulando que a tarefa foi encontrada no mock DB
+    mock_db.query.return_value.filter.return_value.first.return_value = task
 
-    # Simulando tarefas no mock DB
-    def mock_get_task(task_id):
-        if task_id == 1:
-            return completed_task
-        elif task_id == 2:
-            return pending_task
-        else:
-            return None
+    # Act (Ação)
+    with pytest.raises(HTTPException) as exc_info:
+        complete_task(task_id, mock_current_user, mock_db)
 
-    mock_db.query.return_value.filter.return_value.first.side_effect = mock_get_task
-
-    # teste 1: Tentar concluir tarefa já concluída
-    task_to_complete = mock_db.query.return_value.filter.return_value.first(task_id=1)
-    if not task_to_complete:
-        raise HTTPException(status_code=404, detail="Tarefa não encontrada.")
-    if task_to_complete.is_completed:
-        status_message = "Erro: A tarefa já está concluída."
-    else:
-        task_to_complete.is_completed = True
-        status_message = "Tarefa marcada como concluída com sucesso."
-
-    assert task_to_complete.is_completed is True
-    assert status_message == "Erro: A tarefa já está concluída."
-
-    # teste 2: Concluir tarefa não concluída
-    task_to_complete = mock_db.query.return_value.filter.return_value.first(task_id=2)
-    if not task_to_complete:
-        raise HTTPException(status_code=404, detail="Tarefa não encontrada.")
-    if task_to_complete.is_completed:
-        status_message = "Erro: A tarefa já está concluída."
-    else:
-        task_to_complete.is_completed = True
-        status_message = "Tarefa marcada como concluída com sucesso."
-
-    assert task_to_complete.is_completed is True
-    assert status_message == "Tarefa marcada como concluída com sucesso."
+    # Assert (Verificação)
+    # Verificar se a exceção foi levantada corretamente
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Tarefa já está concluída"
 
 
 def test_mark_nonexistent_task_as_completed():
@@ -296,48 +225,193 @@ def test_mark_nonexistent_task_as_completed():
     """
 
     # Arrange (Preparação)
+    task_id = 123456  # ID de tarefa inexistente
+
     mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
 
-    # Tarefa válida
-    valid_task = Task(
-        id=1,
-        title="Tarefa Válida",
-        description="Descrição da tarefa válida",
+    # Simulando que não encontramos a tarefa no mock DB
+    mock_db.query.return_value.filter.return_value.first.return_value = None
+
+    # Act (Ação)
+    with pytest.raises(HTTPException) as exc_info:
+        complete_task(task_id, mock_current_user, mock_db)
+
+    # Assert (Verificação)
+    # Verificar se a exceção foi levantada corretamente
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Tarefa não encontrada"
+
+
+def test_list_tasks():
+    """
+    CT17: Listagem de tarefas do usuário
+
+    Resultado Esperado:
+        O sistema retorna a lista de tarefas de um usuário.
+
+    Entradas:
+
+    Entrada 1: ID de um usuário com tarefas cadastradas (exemplo: ID "123").
+
+    """
+    # Arrange (Preparação)
+    task_id = 1
+
+    mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
+
+    # Criando uma tarefa não concluída (status False)
+    task = Task(
+        id=task_id,
+        title="Tarefa Pendente",
+        description="Esta tarefa não foi concluída",
+        is_completed=True,  # A tarefa não está concluída
+        owner_id=mock_current_user.id,
+    )
+
+    # Simulando que a tarefa foi encontrada no mock DB
+    mock_db.query.return_value.filter.return_value.all.return_value = [task]
+
+    # Act (Ação)
+    response = list_tasks(None, mock_current_user, mock_db)
+
+    # Assert (Verificação)
+    # Verificar se a exceção foi levantada corretamente
+    assert len(response) == 1
+    assert response[0] == task
+
+
+@pytest.mark.parametrize(
+    "status_filter, is_completed",
+    [
+        ("concluídas", True),
+        ("pendentes", False),
+    ],
+)
+def test_list_tasks_by_status(status_filter, is_completed):
+    """
+    CT18: Teste de filtragem de tarefas por status, com uma tarefa concluída e uma tarefa pendente no mock.
+    """
+    # Arrange (Preparação)
+    mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
+
+    tasks = [
+        Task(
+            id=1,
+            title="Tarefa Concluída",
+            description="Tarefa finalizada",
+            is_completed=True,
+            owner_id=mock_current_user.id,
+        ),
+        Task(
+            id=2,
+            title="Tarefa Pendente",
+            description="Tarefa não finalizada",
+            is_completed=False,
+            owner_id=mock_current_user.id,
+        ),
+    ]
+
+    expected_task = next(task for task in tasks if task.is_completed == is_completed)
+
+    filters = []
+
+    def filter_mock(*conditions):
+        nonlocal filters
+        filters.extend(conditions)
+        return mock_db.query.return_value
+
+    def all_mock():
+        filtered_tasks = tasks
+        for condition in filters:
+            if not hasattr(condition, "right"):
+                continue
+
+            boolean = True if str(True).lower() == str(condition.right) else False
+            filtered_tasks = [
+                task for task in filtered_tasks if task.is_completed == boolean
+            ]
+        return filtered_tasks
+
+    mock_db.query.return_value.filter.side_effect = filter_mock
+    mock_db.query.return_value.all = all_mock
+
+    # Act (Ação)
+    response = list_tasks(status_filter, mock_current_user, mock_db)
+
+    # Assert (Verificação)
+    assert len(response) == 1
+    assert response[0] == expected_task
+
+
+def test_list_tasks_by_stats_not_exist():
+    """
+    CT19: Verificar o comportamento ao filtrar por um status que não existe
+    Entradas:
+        Entrada 1: Status inválido para filtragem (exemplo: "em progresso", que não é um status reconhecido pelo sistema).
+    Resultado Esperado:
+        O sistema retorna erro informando que o status fornecido é inválido, no caso de um status não reconhecido.
+        Para um status válido, o sistema realiza a filtragem normalmente.
+    """
+    # Arrange (Preparação)
+    mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
+
+    # Act (Ação)
+    with pytest.raises(HTTPException) as exc_info:
+        list_tasks("concluídas2", mock_current_user, mock_db)
+
+    # Assert (Verificação)
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Status inválido. Use 'concluídas' ou 'pendentes'."
+
+
+def test_task_sharing():
+    """
+    CT20: Compartilhamento de tarefas
+    Resultado Esperado:
+        Tarefa é compartilhada com sucesso.
+    Entradas:
+        ID do usuário com tarefa: "123" (usuário com tarefa cadastrada).
+        ID do usuário para compartilhar a tarefa: "456" (outro usuário cadastrado no sistema).
+    Prioridade:
+        Alta
+    Pós-condições:
+        O outro usuário tem acesso à tarefa compartilhada, podendo visualizá-la e interagir com ela conforme as permissões do sistema.
+    """
+    # Arrange (Preparação)
+    mock_db = Mock(spec=Session)
+    mock_current_user = User(id=1, email="user@example.com")
+
+    task_id = 123
+    task = Task(
+        id=task_id,
+        title="Tarefa Pendente",
+        description="Esta tarefa não foi concluída",
         is_completed=False,
-        owner_id=1,
+        owner_id=mock_current_user.id,
     )
 
-    # Simulando tarefas no mock DB
-    def mock_get_task(task_id):
-        if task_id == 1:
-            return valid_task
-        else:
-            return None
-
-    mock_db.query.return_value.filter.return_value.first.side_effect = mock_get_task
-
-    # Act & Assert (Ação e Verificação)
-
-    # Cenário 1: Tentar concluir tarefa inexistente
-    nonexistent_task = mock_db.query.return_value.filter.return_value.first(
-        task_id=123456
+    share_user_email = "teste@gmail.com"
+    share_user = User(
+        id=1,
+        name="User to Share",
+        email=share_user_email,
+        password="fake_password",
+        tasks=[],
+        shared_tasks=[],
     )
-    if not nonexistent_task:
-        error_message = "Erro: Tarefa não encontrada."
-    else:
-        nonexistent_task.is_completed = True
-        error_message = "Tarefa marcada como concluída com sucesso."
 
-    assert nonexistent_task is None
-    assert error_message == "Erro: Tarefa não encontrada."
+    mock_db.query.return_value.filter.return_value.first.side_effect = [
+        task,
+        share_user,
+    ]
 
-    # Cenário 2: Concluir tarefa válida
-    task_to_complete = mock_db.query.return_value.filter.return_value.first(task_id=1)
-    if not task_to_complete:
-        error_message = "Erro: Tarefa não encontrada."
-    else:
-        task_to_complete.is_completed = True
-        success_message = "Tarefa marcada como concluída com sucesso."
+    response = share_task(
+        task_id, ShareTask(user_email=share_user_email), mock_current_user, mock_db
+    )
 
-    assert task_to_complete.is_completed is True
-    assert success_message == "Tarefa marcada como concluída com sucesso."
+    assert response == {"msg": f"Tarefa compartilhada com {share_user_email}"}
+    assert task.shared_with_users[0] == share_user
