@@ -1,6 +1,8 @@
-# Gerenciador de Tarefas
+# UDESC Testes de Software - Trabalho 1
 
-Este é um projeto de um **Gerenciador de Tarefas** desenvolvido em **Python**, utilizando **FastAPI** para o backend. O sistema permite que usuários registrem-se, façam login, criem e gerenciem tarefas, além de compartilhar tarefas com outros usuários.
+## Descrição
+
+Este projeto, focado na automação de testes de unidade e testes de integração, é um Gerenciador de Tarefas desenvolvido em Python com FastAPI no backend. Ele oferece funcionalidades como registro de usuários, login, criação e compartilhamento de tarefas, garantindo a qualidade do sistema por meio de testes robustos. As ferramentas utilizadas incluem unittest, pytest, SQLAlchemy, SQLite e FastAPI TestClient, permitindo validar tanto componentes isolados quanto a integração entre diferentes partes do sistema.
 
 ## Índice
 
@@ -40,44 +42,35 @@ Este é um projeto de um **Gerenciador de Tarefas** desenvolvido em **Python**, 
 
 8.  [Autores](#autores)
 
-## Descrição do Projeto
-
-O Gerenciador de Tarefas é uma aplicação web que permite aos usuários administrar suas tarefas diárias de forma eficiente. Com funcionalidades que incluem criação, edição, exclusão, conclusão e compartilhamento de tarefas, o sistema visa melhorar a produtividade e organização pessoal.
-
 ## Requisitos Funcionais e Regras de Negócio
 
-### RF1: O sistema deve permitir o cadastro de novos usuários
+### RF1: Manter Usuários
 
-*   RN1: O e-mail deve ser único por usuário
-*   RN2: A senha precisa ser armazenada com criptografia unidirecional
+#### RN1.1
+O sistema deve permitir o cadastro de novos usuários, garantindo que a senha seja criptografada de forma unidirecional usando algoritmos seguros, como `bcrypt`.
 
-### RF2: O sistema deve permitir o login de usuários
+#### RN1.2
+O sistema deve validar as credenciais de login dos usuários, verificando se a senha fornecida corresponde ao hash armazenado de maneira segura.
 
-*   RN1: O login deve ser realizado com o e-mail e senha cadastrados.
+### RF2: Manter Tarefas
 
-### RF3: O sistema deve permitir que o usuário cadastre novas tarefas
+#### RN2.1
+Deve ser possível cadastrar novas tarefas, garantindo que o título seja único por usuário e rejeitando títulos duplicados, com mensagem de erro adequada.
 
-*   RN1: O mesmo usuário não pode ter mais de uma tarefa com o mesmo nome
+#### RN2.2
+O sistema deve permitir a exclusão de tarefas, garantindo que apenas tarefas não concluídas possam ser removidas, e que uma mensagem de erro seja exibida caso a tarefa não exista.
 
-### RF4: O sistema deve permitir a edição de tarefas cadastradas
+#### RN2.3
+O sistema deve permitir a edição de tarefas pendentes, rejeitando alterações em tarefas concluídas ou inexistentes.
 
-*   RN1: Tarefas concluídas não podem ser editadas
+#### RN2.4
+Deve ser possível marcar tarefas pendentes como concluídas, rejeitando qualquer tentativa de concluir uma tarefa já concluída ou inexistente.
 
-### RF5: O sistema deve permitir a exclusão de tarefas
+#### RN2.5
+O sistema deve permitir listar as tarefas do usuário, aplicando filtro por status (concluído ou pendente) ou sem filtro, retornando todos os registros disponíveis.
 
-*   RN1: Tarefas concluídas não podem ser excluídas
-
-### RF6: O sistema deve permitir marcar tarefas como concluídas
-
-*   RN1: Tarefas já concluídas não podem ser concluídas novamente
-
-### RF7: O sistema deve permitir a listagem de tarefas
-
-*   RN1: O usuário deve poder filtrar tarefas por status (concluídas ou pendentes).
-
-### RF8: O sistema deve permitir que usuários compartilhem suas tarefas com demais usuários
-
-*   RN1: Somente tarefas criadas pelo usuário logado podem ser compartilhadas pelo mesmo
+#### RN2.6
+O sistema deve permitir que um usuário logado compartilhe suas tarefas com outros usuários, retornando erro caso a tarefa ou o usuário de destino não existam.
 
 ## Funcionalidades
 
@@ -137,20 +130,7 @@ O Gerenciador de Tarefas é uma aplicação web que permite aos usuários admini
   - routers/
     - user.py              # Endpoints relacionados a usuários
     - task.py              # Endpoints relacionados a tarefas
-- tests/
-  - felipe/
-    - unit_tests/
-      - test_felipe_auth.py       # 10 Testes Unitários de Felipe
-      - test_felipe_tasks.py
-      - conftest.py               # Configurações do pytest para Felipe
-    - integration_tests/
-      - test_felipe_integration.py  # 4 Testes de Integração de Felipe
-  - douglas/
-    - unit_tests/
-      - test_douglas_tasks.py      # 10 Testes Unitários de Douglas
-      - conftest.py                # Configurações do pytest para Douglas
-    - integration_tests/
-      - test_douglas_integration.py  # 4 Testes de Integração de Douglas
+- tests/                   # Testes implementados
 - Makefile                 # Comandos úteis do Makefile
 - requirements.txt         # Dependências do projeto
 - uv.lock                  # Arquivo de lock do uv
@@ -261,120 +241,3 @@ Remova todos os diretórios `__pycache__` e arquivos `.pyc` para evitar conflito
 make clean-cache
 
 ```
-
-***
-
-## Testes
-
-### Executando os Testes com pytest
-
-#### Testes de Unidade
-
-*   **Felipe:**
-
-    Execute os testes unitários de Felipe:
-
-    ```
-    pytest tests/felipe/unit_tests/
-
-    ```
-
-*   **Douglas:**
-
-    Execute os testes unitários de Douglas:
-
-    ```
-    pytest tests/douglas/unit_tests/
-
-    ```
-
-#### Testes de Integração
-
-*   **Felipe:**
-
-    Execute os testes de integração de Felipe:
-
-    ```
-    pytest tests/felipe/integration_tests/
-
-    ```
-
-*   **Douglas:**
-
-    Execute os testes de integração de Douglas:
-
-    ```
-    pytest tests/douglas/integration_tests/
-
-    ```
-
-### Cobertura de Testes
-
-Cada membro do grupo desenvolveu:
-
-*   **10 Casos de Teste Unitários** utilizando no mínimo 4 RFs ou RNs.
-
-*   **4 Casos de Teste de Integração** utilizando no mínimo 2 RFs ou RNs.
-
-Os testes cobrem os requisitos funcionais e regras de negócio conforme especificado, garantindo a qualidade e confiabilidade do sistema.
-
-#### Mapeamento dos Testes para RFs e RNs
-
-##### Felipe
-
-**Testes de Unidade:**
-
-1.  `test_felipe_unit_auth.py` - RF1-RN2, RF2-RN1
-    1. `test_returns_hashed_password_from_plain_text` - RF1-RN2
-    2. `test_hashed_password_matches_original_with_key` - RF1-RN2
-    3. `test_hashed_password_does_not_match_non_original_password` - RF1-RN2
-    4. `test_authenticate_user_success` - RF2-RN1
-    5. `test_authenticate_user_wrong_password` - RF2-RN1
-    6. `test_authenticate_user_nonexistent` - RF2-RN1
-
-2.  `test_felipe_unit_tasks.py` - Não validado
-
-**Testes de Integração:**
-
-1.  `test_felipe_integration.py` - Não validado
-
-##### Douglas
-
-**Testes de Unidade:**
-
-1.  `test_douglas_unit_tasks.py` - Não validado
-
-**Testes de Integração:**
-
-1.  `test_douglas_integration.py` - Não validado
-
-## Autores
-
-*   **Felipe**
-
-    *   **Responsabilidades:**
-
-        *   RF1: O sistema deve permitir o cadastro de novos usuários
-
-        *   RF2: O sistema deve permitir o login de usuários
-
-        *   RF3: O sistema deve permitir que o usuário cadastre novas tarefas
-
-        *   RF5: O sistema deve permitir a exclusão de tarefas
-
-        *   **Testes:** Desenvolvimento de 10 testes unitários e 4 testes de integração relacionados aos requisitos acima.
-
-*   **Douglas**
-
-    *   **Responsabilidades:**
-
-        *   RF4: O sistema deve permitir a edição de tarefas cadastradas
-
-        *   RF6: O sistema deve permitir marcar tarefas como concluídas
-
-        *   RF7: O sistema deve permitir a listagem de tarefas
-
-        *   RF8: O sistema deve permitir que usuários compartilhem suas tarefas com demais usuários
-
-        *   **Testes:** Desenvolvimento de 10 testes unitários e 4 testes de integração relacionados aos requisitos acima.
-
